@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniNugetServer", "MiniNuge
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docker", "Docker", "{87497B0F-FBCE-4BE1-80FA-152F8A4D4EC2}"
 	ProjectSection(SolutionItems) = preProject
-		Docker\MiniNugetServer = Docker\MiniNugetServer
+		MiniNugetServer.dockerfile = MiniNugetServer.dockerfile
 	EndProjectSection
 EndProject
 Global
