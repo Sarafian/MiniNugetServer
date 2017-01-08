@@ -12,13 +12,22 @@ Containerizing this [Nuget Server](http://nugetserver.net/) needs to address a c
 # Source structure
 
 Within [Source](Source) there is the `MiniNugetServer.sln` visual studio solution and the `MiniNugetServer.dockerfile` docker build file. 
-Within [Automation](Automation) there is the PowerShell build script `Build.ps1` that uses the `Publish` folder (excluded by `gitignore`) to build the container.
+Within [Automation](Automation) there is the PowerShell build script `Invoke-All.ps1` that through parameters does the following.
 
-1. Clean the `Publish` folder.
-1. Build the `MiniNugetServer.sln` solution.
-1. Publish the `MiniNugetServer.csproj` web application.
-1. Copy the docker build file `MiniNugetServer.dockerfile`.
-1. Build the container.
+| Step | Dependency | Parameter | Description |
+| ---- | ---------- | --------- | ----------- |
+| Clean | | `-Clean` | Removes the Publish directory |
+| Restore | | `-RestoreNuget` | Downloads the Nuget client if necessary and restores the packages |
+| Build | Restore | `-MSBuild` | Builds and publishes the MiniNugetServer web site |
+| Docker | Build | `-Docker` |  Build the container **asarafian/mininugetserver** |
+
+To run all steps execute `.\Automation\Invoke-All.ps1 -Clean -RestoreNuget -MSBuild -Docker -ErrorAction Stop`. 
+You can also debug each step as long as the dependency chain is respected.
+
+# Run the container
+
+Withing [Scripts](Scripts) execute the `Start-MiniNugetServer.ps1` to start the container. 
+If everything goes well it will produce the url that for the containerized MiniNugetServer
 
 # Goal 
 
