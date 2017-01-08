@@ -93,6 +93,7 @@ if($Docker)
 {
     Write-Progress -Activity $activity -Status "Building container"
     Copy-Item -Path "$sourcePath\MiniNugetServer\MiniNugetServer.dockerfile" -Destination $publishPath -Force
+    Copy-Item -Path "$sourcePath\MiniNugetServer\Set-Configuration.ps1" -Destination $publishPath -Force
 
     $arguments=@(
         "build"

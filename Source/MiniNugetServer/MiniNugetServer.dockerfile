@@ -3,15 +3,16 @@
 FROM microsoft/aspnet
 
 # Next, this Dockerfile creates a directory for your application
-RUN mkdir C:\MiniNugetServer
+RUN mkdir C:\Container\MiniNugetServer
 
 # configure the new site in IIS.
 RUN powershell -NoProfile -Command \
     Import-module IISAdministration; \
-    New-IISSite -Name "MiniNugetServer" -PhysicalPath C:\MiniNugetServer -BindingInformation "*:8080:"
+#	Remove-IISSite -Name "Default Web Site" -Confirm:$false; \
+    New-IISSite -Name "MiniNugetServer" -PhysicalPath C:\Container\MiniNugetServer -BindingInformation "*:8080:"
 
-# This instruction tells the container to listen on port 80. 
+# This instruction tells the container to listen on port 8080. 
 EXPOSE 8080
 
 # The final instruction copies the site you published earlier into the container.
-ADD MiniNugetServer/ /MiniNugetServer
+ADD MiniNugetServer/ /Container/MiniNugetServer

@@ -9,6 +9,8 @@ Containerizing this [Nuget Server](http://nugetserver.net/) needs to address a c
 - Mapping the `packagesPath` parameter to an external volume.
 - Can I run this on top of the nano image?
 
+The research progress will be updated in the branches and the wiki pages.
+
 # Source structure
 
 Within [Source](Source) there is the `MiniNugetServer.sln` visual studio solution and the `MiniNugetServer.dockerfile` docker build file. 
@@ -26,8 +28,16 @@ You can also debug each step as long as the dependency chain is respected.
 
 # Run the container
 
-Withing [Scripts](Scripts) execute the `Start-MiniNugetServer.ps1` to start the container. 
+Within [Scripts](Scripts) execute the `Start-MiniNugetServer.ps1` to start the container. 
 If everything goes well it will produce the url that for the containerized MiniNugetServer
+
+# Debug 
+
+To help debug the docker build script and debug the container instance execute `.\Source\MiniNugetServer\Start-DockerDebug.ps1`. 
+This will:
+
+1. Build a container image.
+1. Run the container image and start PowerShell by overriding the entrypoint.
 
 # Goal 
 
@@ -37,3 +47,4 @@ My ultimate goal is to automate fully the build and publishing of the container 
 # If you want to help...
 
 Please submit your ideas in code or with issues. 
+Don't forget to check the wiki pages to identify current progress.
