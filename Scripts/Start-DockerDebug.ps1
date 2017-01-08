@@ -1,4 +1,5 @@
 $imageName="asarafian/mininugetserver"
+$dockerFilePath="$PSScriptRoot/../Source/MiniNugetServer"
 
 # Build the image
 $arguments=@(
@@ -6,8 +7,8 @@ $arguments=@(
     "-t"
     $imageName
     "-f"
-    "$PSScriptRoot/MiniNugetServer.dockerfile"
-    $PSScriptRoot
+    "$dockerFilePath/MiniNugetServer.dockerfile"
+    $dockerFilePath
 )
 & docker $arguments 2>&1
 
