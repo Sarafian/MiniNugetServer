@@ -1,16 +1,33 @@
 param(
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false,ParameterSetName="By Step")]
     [switch]$Clean=$false,
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false,ParameterSetName="By Step")]
     [switch]$RestoreNuget=$false,
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false,ParameterSetName="By Step")]
     [switch]$MSBuild=$false,
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$false,ParameterSetName="By Step")]
+    [Parameter(Mandatory=$false,ParameterSetName="All")]
     [ValidateSet("Debug","Release")]
     [string]$MSBuildConfiguration="Release",
-    [Parameter(Mandatory=$false)]
-    [switch]$Docker=$false
+    [Parameter(Mandatory=$false,ParameterSetName="By Step")]
+    [switch]$Docker=$false,
+    [Parameter(Mandatory=$true,ParameterSetName="All")]
+    [switch]$All=$false
 )
+
+Set-StrictMode -version latest
+
+#region Resolve All parameter set
+
+if($PSCmdlet.ParameterSetName -eq "All")
+{
+    $Clean=$true
+    $RestoreNuget=$true
+    $MSBuild=$true
+    $Docker=$true
+}
+
+#endregion
 
 #region Parameters
 
@@ -93,7 +110,7 @@ if($Docker)
 {
     Write-Progress -Activity $activity -Status "Building container"
     Copy-Item -Path "$sourcePath\MiniNugetServer\MiniNugetServer.dockerfile" -Destination $publishPath -Force
-    Copy-Item -Path "$sourcePath\MiniNugetServer\Set-Configuration.ps1" -Destination $publishPath -Force
+    Copy-Item -Path "$sourcePath\MiniNugetServer\*.ps1" -Destination $publishPath -Force
 
     $arguments=@(
         "build"

@@ -1,3 +1,11 @@
+param(
+    [Parameter(Mandatory=$false)]
+    [ValidateSet("PowerShell","Cmd")]
+    [string]$Cmd="Cmd"
+)
+
+Set-StrictMode -version latest
+
 $imageName="asarafian/mininugetserver"
 $dockerFilePath="$PSScriptRoot/../Source/MiniNugetServer"
 
@@ -17,7 +25,7 @@ $arguments=@(
     "run"
     "--rm"
     "-it"
-    "--entrypoint=powershell"
     $imageName
+    $Cmd
 )
 & docker $arguments 2>&1
