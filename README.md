@@ -34,7 +34,14 @@ To run the same process step by step execute `.\Automation\Invoke-All.ps1 -Clean
 # Run the container
 
 Within [Scripts](Scripts) execute the `Start-Container.ps1` to start the container. 
-If everything goes well it will produce the url that for the containerized MiniNugetServer
+If everything goes well it will produce the url that for the containerized MiniNugetServer.
+
+If you want to run manually then standard `docker run` can be used with option definition of environment parameters **apikey** and **packagesFolder**.
+
+```text
+& docker run -d -p 8080:80 --name mininugetserver asarafian/mininugetserver
+& docker run -d -p 8080:80 -e apikey=mininugetserver -e packagesPath=~/Packages --name mininugetserver asarafian/mininugetserver
+```
 
 # Debug 
 
