@@ -1,30 +1,32 @@
 param(
-    [Parameter(Mandatory=$false,ParameterSetName="By Step")]
+    [Parameter(Mandatory=$false,ParameterSetName="Develop")]
     [switch]$Clean=$false,
-    [Parameter(Mandatory=$false,ParameterSetName="By Step")]
+    [Parameter(Mandatory=$false,ParameterSetName="Develop")]
+    [switch]$InstallMSBuildTools=$false,
+    [Parameter(Mandatory=$false,ParameterSetName="Develop")]
     [switch]$RestoreNuget=$false,
-    [Parameter(Mandatory=$false,ParameterSetName="By Step")]
+    [Parameter(Mandatory=$false,ParameterSetName="Develop")]
     [switch]$MSBuild=$false,
-    [Parameter(Mandatory=$false,ParameterSetName="By Step")]
-    [Parameter(Mandatory=$false,ParameterSetName="All")]
+    [Parameter(Mandatory=$false,ParameterSetName="Develop")]
     [ValidateSet("Debug","Release")]
     [string]$MSBuildConfiguration="Release",
-    [Parameter(Mandatory=$false,ParameterSetName="By Step")]
+    [Parameter(Mandatory=$false,ParameterSetName="Develop")]
     [switch]$Docker=$false,
-    [Parameter(Mandatory=$true,ParameterSetName="All")]
-    [switch]$All=$false
+    [Parameter(Mandatory=$true,ParameterSetName="Container")]
+    [switch]$InContainer=$false
 )
 
 Set-StrictMode -version latest
 
 #region Resolve All parameter set
 
-if($PSCmdlet.ParameterSetName -eq "All")
+if($PSCmdlet.ParameterSetName -eq "Container")
 {
     $Clean=$true
+    $InstallMSBuildTools=$true
     $RestoreNuget=$true
     $MSBuild=$true
-    $Docker=$true
+    #$Docker=$true
 }
 
 #endregion
@@ -32,7 +34,16 @@ if($PSCmdlet.ParameterSetName -eq "All")
 #region Parameters
 
 $activity="MiniNuGetServer"
-$msBuildPath="C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe"
+$msBuildToolsUrl="http://download.microsoft.com/download/4/3/3/4330912d-79ae-4037-8a55-7a8fc6b5eb68/buildtools_full.exe"
+if($InstallMSBuildTools)
+{
+    $msBuildPath="C:\Program Files (x86)\MSBuild\14.0\Bin\amd64\MSBuild.exe"
+}
+else
+{
+    $msBuildPath="C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe"
+}
+#$msBuildPath="C:\Windows\Microsoft.NET\Framework64\v4.0.30319\msbuild.exe"
 $sourcePath=Resolve-Path "$PSScriptRoot\..\Source"
 $slnPath=Join-Path $sourcePath "MiniNugetServer\MiniNugetServer.sln"
 $nugetUrl="https://dist.nuget.org/win-x86-commandline/latest/nuget.exe"
@@ -50,11 +61,46 @@ if($Clean)
 
 #endregion
 
+#region Download/Install MSBuildTools
+
+if($InstallMSBuildTools)
+{
+    $msBuildToolsTempPath=Join-Path $env:TEMP buildtools_full.exe
+    $msBuildToolsLogPath=Join-Path $env:TEMP microsoft-build-tools-2015.log
+    
+    if(Test-Path -Path $msBuildPath)
+    {
+        Write-Warning "Found $msBuildToolsTempPath. Skipping install..."
+    }
+    else
+    {
+        if(Test-Path $msBuildToolsTempPath)
+        {
+            Write-Warning "Found $msBuildToolsTempPath. Skipping download..."
+        }
+        else
+        {
+            Write-Progress -Activity $activity -Status "Downloading MSBuilt tools 2015"
+            (New-Object System.Net.WebClient).DownloadFile($msBuildToolsUrl, $msBuildToolsTempPath)
+        }
+        Write-Progress -Activity $activity -Status "Installing MSBuilt tools 20151"
+        $args=@(
+            "/Passive"
+            "/NoRestart"
+            "/Log"
+            $msBuildToolsLogPath
+        )
+
+        & $msBuildToolsTempPath $args 2>&1
+    }
+}
+
+#endregion
+
 #region RestoreNuget Step
 
 if($RestoreNuget)
 {
-    Write-Progress -Activity $activity -Status "Downloading NuGet client"
     $nugetPath=Join-Path $env:TEMP "nuget.exe"
     if(Test-Path -Path $nugetPath)
     {
@@ -62,12 +108,19 @@ if($RestoreNuget)
     }
     else
     {
+        Write-Progress -Activity $activity -Status "Downloading NuGet client"
         (New-Object System.Net.WebClient).DownloadFile($nugetUrl, $nugetPath)
     }
 
     Write-Progress -Activity $activity -Status "Restoring NuGet packages"
     $slnPath=Join-Path $sourcePath "MiniNugetServer\MiniNugetServer.sln"
 
+<#
+    if($InstallMSBuildTools)
+    {
+        $env:Path+=Split-Path -Path $msBuildPath -Parent
+    }
+#>    
     $arguments=@(
         "restore"
         $slnPath
