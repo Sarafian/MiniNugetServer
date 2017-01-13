@@ -1,4 +1,4 @@
-﻿FROM microsoft/windowsservercore
+﻿FROM microsoft/windowsservercore:latest
 
 MAINTAINER Alex Sarafian
 
