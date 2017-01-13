@@ -1,6 +1,11 @@
 param(
     [Parameter(Mandatory=$false,ParameterSetName="Develop")]
+    [Parameter(Mandatory=$true,ParameterSetName="Container")]
+    [string]$PublishPath="$PSScriptRoot\..\Publish",
+    [Parameter(Mandatory=$false,ParameterSetName="Develop")]
     [switch]$Clean=$false,
+    [Parameter(Mandatory=$false,ParameterSetName="Develop")]
+    [switch]$InstallWindowsSDK=$false,
     [Parameter(Mandatory=$false,ParameterSetName="Develop")]
     [switch]$InstallMSBuildTools=$false,
     [Parameter(Mandatory=$false,ParameterSetName="Develop")]
@@ -9,11 +14,7 @@ param(
     [switch]$MSBuild=$false,
     [Parameter(Mandatory=$false,ParameterSetName="Develop")]
     [ValidateSet("Debug","Release")]
-    [string]$MSBuildConfiguration="Release",
-    [Parameter(Mandatory=$false,ParameterSetName="Develop")]
-    [switch]$Docker=$false,
-    [Parameter(Mandatory=$true,ParameterSetName="Container")]
-    [switch]$InContainer=$false
+    [string]$MSBuildConfiguration="Release"
 )
 
 Set-StrictMode -version latest
@@ -23,10 +24,10 @@ Set-StrictMode -version latest
 if($PSCmdlet.ParameterSetName -eq "Container")
 {
     $Clean=$true
+    $InstallWindowsSDK=$true
     $InstallMSBuildTools=$true
     $RestoreNuget=$true
     $MSBuild=$true
-    #$Docker=$true
 }
 
 #endregion
@@ -34,6 +35,9 @@ if($PSCmdlet.ParameterSetName -eq "Container")
 #region Parameters
 
 $activity="MiniNuGetServer"
+# https://chocolatey.org/packages/windows-sdk-10.0
+$windowsSDKUrl="http://download.microsoft.com/download/E/1/F/E1F1E61E-F3C6-4420-A916-FB7C47FBC89E/standalonesdk/sdksetup.exe"
+# https://chocolatey.org/packages/microsoft-build-tools
 $msBuildToolsUrl="http://download.microsoft.com/download/4/3/3/4330912d-79ae-4037-8a55-7a8fc6b5eb68/buildtools_full.exe"
 if($InstallMSBuildTools)
 {
@@ -61,6 +65,42 @@ if($Clean)
 
 #endregion
 
+#region Download/Install WindowsSDK
+
+if($InstallWindowsSDK)
+{
+    $windowsSDKTempPath=Join-Path $env:TEMP sdk_setup.exe
+    $windowsSDKLogPath=Join-Path $env:TEMP microsoft-build-tools-2015.log
+    $netFrameworkSDLPath="Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6\"
+
+    if(Test-Path -Path $netFrameworkSDLPath)
+    {
+        Write-Warning "Found $netFrameworkSDLPath. Skipping install..."
+    }
+    else
+    {
+        if(Test-Path $windowsSDKTempPath)
+        {
+            Write-Warning "Found $windowsSDKTempPath. Skipping download..."
+        }
+        else
+        {
+            Write-Progress -Activity $activity -Status "Downloading Microsoft Windows SDK for Windows 10 and .NET Framework 4.6"
+            (New-Object System.Net.WebClient).DownloadFile($windowsSDKUrl, $windowsSDKTempPath)
+        }
+        Write-Progress -Activity $activity -Status "Installing Microsoft Windows SDK for Windows 10 and .NET Framework 4.6"
+        $args=@(
+            "/Quiet"
+            "/NoRestart"
+            "/Log"
+            $windowsSDKLogPath
+        )
+
+        & $windowsSDKTempPath $args 2>&1
+    }
+}
+
+#endregion
 #region Download/Install MSBuildTools
 
 if($InstallMSBuildTools)
@@ -70,7 +110,7 @@ if($InstallMSBuildTools)
     
     if(Test-Path -Path $msBuildPath)
     {
-        Write-Warning "Found $msBuildToolsTempPath. Skipping install..."
+        Write-Warning "Found $msBuildPath. Skipping install..."
     }
     else
     {
@@ -83,7 +123,7 @@ if($InstallMSBuildTools)
             Write-Progress -Activity $activity -Status "Downloading MSBuilt tools 2015"
             (New-Object System.Net.WebClient).DownloadFile($msBuildToolsUrl, $msBuildToolsTempPath)
         }
-        Write-Progress -Activity $activity -Status "Installing MSBuilt tools 20151"
+        Write-Progress -Activity $activity -Status "Installing MSBuilt tools 2015"
         $args=@(
             "/Passive"
             "/NoRestart"
@@ -93,6 +133,15 @@ if($InstallMSBuildTools)
 
         & $msBuildToolsTempPath $args 2>&1
     }
+}
+
+#endregion
+
+#region Initialize Environment
+
+if(($env:Path -split ";") -notcontains $msBuildPath)
+{
+    $env:Path+=";"+(Split-Path -Path $msBuildPath -Parent)
 }
 
 #endregion
@@ -115,12 +164,6 @@ if($RestoreNuget)
     Write-Progress -Activity $activity -Status "Restoring NuGet packages"
     $slnPath=Join-Path $sourcePath "MiniNugetServer\MiniNugetServer.sln"
 
-<#
-    if($InstallMSBuildTools)
-    {
-        $env:Path+=Split-Path -Path $msBuildPath -Parent
-    }
-#>    
     $arguments=@(
         "restore"
         $slnPath
@@ -153,10 +196,13 @@ if($MSBuild)
         "/p:VisualStudioVersion=14.0"
     )
     & $msBuildPath $arguments 2>&1
+
+    Copy-Item -Path "$sourcePath\MiniNugetServer\*.ps1" -Destination $publishPath -Force
 }
 
 #endregion
 
+<#
 #region Docker step
 
 if($Docker)
@@ -177,3 +223,5 @@ if($Docker)
 }
 
 #endregion
+
+#>
