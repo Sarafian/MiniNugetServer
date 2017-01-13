@@ -2,32 +2,27 @@ param(
     [Parameter(Mandatory=$false)]
     [string]$ExternalPort="8080",
     [Parameter(Mandatory=$false)]
-    [switch]$Rerun=$false,
-    [Parameter(Mandatory=$false)]
     [string]$ApiKey="mininugetserver",
     [Parameter(Mandatory=$false)]
-    [string]$PackagesPath="~/Packages"
+    [string]$PackagesPath="~/Packages",
+    [Parameter(Mandatory=$false)]
+    [switch]$Remove=$false
 )
 Set-StrictMode -version latest
 
-$name="mininugetserver"
+$instancename="mininugetserver"
 $imageName="asarafian/mininugetserver"
 
-#region remove instance
+#region Remove
 
-if($Rerun)
+if($Remove)
 {
-    $arguments=@(
-        "stop"
-        $name
-    )
-    & docker $arguments
     $arguments=@(
         "rm"
         "-f"
-        $name
+        $instancename
     )
-    & docker $arguments
+    & docker $arguments 2>&1
 }
 
 #endregion
@@ -38,14 +33,14 @@ $arguments=@(
     "ps"
     "-a"
     "--filter"
-    "name=$name"
+    "name=$instancename"
 )
 $filterResult=@(& docker $arguments 2>&1)
 if($filterResult.Count -gt 1)
 {
     $arguments=@(
         "start"
-        $name
+        $instancename
     )
 }
 else
@@ -60,7 +55,7 @@ else
         "-e"
         "packagesPath=$PackagesPath"
         "--name"
-        $name
+        $instancename
         $imageName
     )
 }
@@ -70,7 +65,7 @@ else
 
 #region test
 
-$ip=& docker inspect -f "{{ .NetworkSettings.Networks.nat.IPAddress }}" $name
+$ip=& docker inspect -f "{{ .NetworkSettings.Networks.nat.IPAddress }}" $instancename
 $url="http://$($ip)/"
 if(Test-NetConnection -CommonTCPPort HTTP -ComputerName $ip -InformationLevel Quiet)
 {

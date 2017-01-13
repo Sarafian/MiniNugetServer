@@ -10,11 +10,11 @@ ADD https://github.com/Microsoft/iis-docker/blob/master/windowsservercore/Servic
 
 # First empty line helps with commenting each line
 RUN powershell -NoProfile -NonInteractive -Command "\
-    $ErrorPreference="Stop"; \
+    $ErrorPreference='Stop'; \
     Add-WindowsFeature Web-Server; \
     Add-WindowsFeature NET-Framework-45-ASPNET; \
     Add-WindowsFeature Web-Asp-Net45; \
-    Remove-Item -Recurse C:\inetpub\wwwroot\*
+    Remove-Item -Recurse C:\inetpub\wwwroot\*; \
 "   
 
 # First empty line helps with commenting each line

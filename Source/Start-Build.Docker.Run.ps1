@@ -22,7 +22,7 @@ Set-StrictMode -version latest
 
 if($PSCmdlet.ParameterSetName -eq "Container")
 {
-    $Clean=$true
+#    $Clean=$true
     $InstallWindowsSDK=$true
     $InstallMSBuildTools=$true
     $RestoreNuget=$true
@@ -33,7 +33,6 @@ if($PSCmdlet.ParameterSetName -eq "Container")
 
 #region Parameters
 
-$activity="MiniNuGetServer"
 # https://chocolatey.org/packages/windows-sdk-10.0
 $windowsSDKUrl="http://download.microsoft.com/download/E/1/F/E1F1E61E-F3C6-4420-A916-FB7C47FBC89E/standalonesdk/sdksetup.exe"
 # https://chocolatey.org/packages/microsoft-build-tools
@@ -58,7 +57,7 @@ $publishPath="$PSScriptRoot\..\Publish"
 
 if($Clean)
 {
-    Write-Progress -Activity $activity -Status "Removing Publish folder"
+    Write-Host "Removing Publish folder"
     Remove-Item $publishPath -Force -Recurse -ErrorAction SilentlyContinue
 }
 
@@ -84,10 +83,10 @@ if($InstallWindowsSDK)
         }
         else
         {
-            Write-Progress -Activity $activity -Status "Downloading Microsoft Windows SDK for Windows 10 and .NET Framework 4.6"
+            Write-Host "Downloading Microsoft Windows SDK for Windows 10 and .NET Framework 4.6"
             (New-Object System.Net.WebClient).DownloadFile($windowsSDKUrl, $windowsSDKTempPath)
         }
-        Write-Progress -Activity $activity -Status "Installing Microsoft Windows SDK for Windows 10 and .NET Framework 4.6"
+        Write-Host "Installing Microsoft Windows SDK for Windows 10 and .NET Framework 4.6"
         $args=@(
             "/Quiet"
             "/NoRestart"
@@ -95,7 +94,10 @@ if($InstallWindowsSDK)
             $windowsSDKLogPath
         )
 
-        & $windowsSDKTempPath $args 2>&1
+        # This doesn't seem to pause the script until the install finishes
+        # & windowsSDKTempPath $args 2>&1
+        Start-Process -FilePath $windowsSDKTempPath -ArgumentList $args -NoNewWindow -Wait
+        Write-Host "Installed Microsoft Windows SDK for Windows 10 and .NET Framework 4.6"
     }
 }
 
@@ -120,10 +122,10 @@ if($InstallMSBuildTools)
         }
         else
         {
-            Write-Progress -Activity $activity -Status "Downloading MSBuilt tools 2015"
+            Write-Host "Downloading MSBuilt tools 2015"
             (New-Object System.Net.WebClient).DownloadFile($msBuildToolsUrl, $msBuildToolsTempPath)
         }
-        Write-Progress -Activity $activity -Status "Installing MSBuilt tools 2015"
+        Write-Host "Installing MSBuilt tools 2015"
         $args=@(
             "/Passive"
             "/NoRestart"
@@ -132,6 +134,10 @@ if($InstallMSBuildTools)
         )
 
         & $msBuildToolsTempPath $args 2>&1
+        # This doesn't seem to pause the script until the install finishes
+        # & msBuildToolsTempPath $args 2>&1
+        Start-Process -FilePath $msBuildToolsTempPath -ArgumentList $args -NoNewWindow -Wait
+        Write-Host "Installed  MSBuilt tools 2015"
     }
 }
 
@@ -139,9 +145,12 @@ if($InstallMSBuildTools)
 
 #region Initialize Environment
 
-if(($env:Path -split ";") -notcontains $msBuildPath)
+$msBuildParentPath=Split-Path -Path $msBuildPath -Parent
+if(($env:Path -split ";") -notcontains $msBuildParentPath)
 {
-    $env:Path+=";"+(Split-Path -Path $msBuildPath -Parent)
+    $newPath=$env:Path+";"+$msBuildParentPath
+    $env:Path+=";"+$msBuildParentPath
+    Write-Host "Added $msBuildParentPath to environment variables"
 }
 
 #endregion
@@ -157,11 +166,11 @@ if($RestoreNuget)
     }
     else
     {
-        Write-Progress -Activity $activity -Status "Downloading NuGet client"
+        Write-Host "Downloading NuGet client"
         (New-Object System.Net.WebClient).DownloadFile($nugetUrl, $nugetPath)
     }
 
-    Write-Progress -Activity $activity -Status "Restoring NuGet packages"
+    Write-Host "Restoring NuGet packages"
     $slnPath=Join-Path $sourcePath "MiniNugetServer\MiniNugetServer.sln"
 
     $arguments=@(
@@ -177,7 +186,7 @@ if($RestoreNuget)
 
 if($MSBuild)
 {
-    Write-Progress -Activity $activity -Status "Building solution"
+    Write-Host "Building solution"
 
     $arguments=@(
         "/p:Configuration=$MSBuildConfiguration"
@@ -187,7 +196,7 @@ if($MSBuild)
     )
     & $msBuildPath $arguments 2>&1
 
-    Write-Progress -Activity $activity -Status "Publishing project"
+    Write-Host "Publishing project"
     $csprojPath=Join-Path $sourcePath "MiniNugetServer\MiniNugetServer\MiniNugetServer.csproj"
     $arguments=@(
         $csprojPath
