@@ -16,20 +16,21 @@ The research progress will be updated in the branches and the wiki pages.
 My goal is to publish this container to **asarafian/mininugetserver** to help me and others quickly setup a dev/tested oriented nuget feed. 
 My ultimate goal is to automate fully the build and publishing of the container and make it available to Azure and AWS windows containers.
 
+# Docker hub
+
+Container is **available** on [asarafian/mininugetserver](https://hub.docker.com/r/asarafian/mininugetserver/).
+
 # Source structure
 
-Within [Source](Source) there is the `MiniNugetServer.sln` visual studio solution and the `MiniNugetServer.dockerfile` docker build file. 
-Within [Automation](Automation) there is the PowerShell build script `Invoke-All.ps1` that through parameters does the following.
+Within [Source](Source) there is the a Visual Studio 2015 solution that is in effect an empty web application with reference to the [Nuget.Server](https://www.nuget.org/packages/NuGet.Server/) package. 
+All files in the repository favor debuging and troubleshooting. 
 
-| Step | Dependency | Parameter | Description |
-| ---- | ---------- | --------- | ----------- |
-| Clean | | `-Clean` | Removes the Publish directory |
-| Restore | | `-RestoreNuget` | Downloads the Nuget client if necessary and restores the packages |
-| Build | Restore | `-MSBuild` | Builds and publishes the MiniNugetServer web site |
-| Docker | Build | `-Docker` |  Build the container **asarafian/mininugetserver** |
+The docker file is self contained. 
+That means it will install all necessary tools to build and publish the solution from within the container. 
 
-To run all steps execute `.\Automation\Invoke-All.ps1 -All -ErrorAction Stop`. 
-To run the same process step by step execute `.\Automation\Invoke-All.ps1 -Clean -RestoreNuget -MSBuild -Docker -ErrorAction Stop`. 
+# Build the container
+
+To build the container manually execute `.\Scripts\Debug-Container.ps1 -Build -ErrorAction Stop`.
 
 # Run the container
 
@@ -44,15 +45,10 @@ If you want to run manually then standard `docker run` can be used with option d
 
 # Debug 
 
-To help debug the docker build script and debug the container instance execute `.\Scripts\Debug-Container.ps1`. 
-This will:
-
-1. Build a container image using the source as is in the source directory.
-1. Run the container image and start the shell. You can overwrite which shell to start by specifying the `-Cmd` parameter. 
-
-This script is meant:
-- To provide an overview of what happened during the build of the image.
-- Execute manually any cmd. To see what will happen when running the image execute the `CMD` from the docker build file `MiniNugetServer.dockerfile`.
+To help tests within a container execute `.\Scripts\Debug-Container.ps1 -WindowsServer -Start cmd -ErrorAction Stop`. 
+This will start a **microsoft/windowsservercore** instance with the shell. 
+What is important is that withing the instance the "C:\Repository" will point to the root of the repository. 
+To debug, copy any fragment from the docker file and execute within the container.
 
 # If you want to help...
 
