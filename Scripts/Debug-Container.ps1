@@ -1,31 +1,53 @@
 param(
     [Parameter(Mandatory=$false)]
-    [ValidateSet("PowerShell","Cmd")]
-    [string]$Cmd="Cmd"
+    [switch]$Remove=$false,
+    [Parameter(Mandatory=$false)]
+    [switch]$Build=$false,
+    [Parameter(Mandatory=$false)]
+    [ValidateSet("None","PowerShell","Cmd")]
+    [string]$Start="None"
 )
 
 Set-StrictMode -version latest
 
+$instancename="mininugetserver.debug"
 $imageName="asarafian/mininugetserver"
-$dockerFilePath="$PSScriptRoot/../Source/MiniNugetServer"
+$dockerFilePath="$PSScriptRoot/../Source"
 
-# Build the image
-$arguments=@(
-    "build"
-    "-t"
-    $imageName
-    "-f"
-    "$dockerFilePath/MiniNugetServer.dockerfile"
-    $dockerFilePath
-)
-& docker $arguments 2>&1
+if($Remove)
+{
+    $arguments=@(
+        "rm"
+        "-f"
+        $instancename
+    )
+    & docker $arguments 2>&1
+}
 
-# Run the image and enter powershell
-$arguments=@(
-    "run"
-    "--rm"
-    "-it"
-    $imageName
-    $Cmd
-)
-& docker $arguments 2>&1
+if($Build)
+{
+    $arguments=@(
+        "build"
+        "-t"
+        $imageName
+        "-f"
+        "$dockerFilePath/MiniNugetServer.dockerfile"
+        $dockerFilePath
+    )
+    & docker $arguments 2>&1
+}
+
+if($Start -ne "None")
+{
+    $arguments=@(
+        "run"
+        "--rm"
+        "-it"
+        "--name"
+        $instancename
+        $imageName
+        $Start
+    )
+    & docker $arguments 2>&1
+
+}
