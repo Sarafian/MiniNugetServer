@@ -16,6 +16,10 @@ The research progress will be updated in the branches and the wiki pages.
 My goal is to publish this container to **asarafian/mininugetserver** to help me and others quickly setup a dev/tested oriented nuget feed. 
 My ultimate goal is to automate fully the build and publishing of the container and make it available to Azure and AWS windows containers.
 
+# Docker hub
+
+Container is **available** on [asarafian/mininugetserver](https://hub.docker.com/r/asarafian/mininugetserver/).
+
 # Source structure
 
 Within [Source](Source) there is the a Visual Studio 2015 solution that is in effect an empty web application with reference to the [Nuget.Server](https://www.nuget.org/packages/NuGet.Server/) package. 
