@@ -9,7 +9,7 @@ Containerizing this [Nuget Server](http://nugetserver.net/) needs to address a c
 - Mapping the `packagesPath` parameter to an external volume.
 - Can I run this on top of the nano image?
 
-The research progress will be updated in the branches and the wiki pages.
+**Use the wiki pages to track the progress and answers to these questions**.
 
 # Goal 
 
@@ -23,7 +23,7 @@ Container is **available** on [asarafian/mininugetserver](https://hub.docker.com
 # Source structure
 
 Within [Source](Source) there is the a Visual Studio 2015 solution that is in effect an empty web application with reference to the [Nuget.Server](https://www.nuget.org/packages/NuGet.Server/) package. 
-All files in the repository favor debuging and troubleshooting. 
+All files in the repository favor debugging and troubleshooting. 
 
 The docker file is self contained. 
 That means it will install all necessary tools to build and publish the solution from within the container. 
@@ -77,6 +77,21 @@ To help tests within a container execute `.\Scripts\Debug-Container.ps1 -Windows
 This will start a **microsoft/windowsservercore** instance with the shell. 
 What is important is that withing the instance the "C:\Repository" will point to the root of the repository. 
 To debug, copy any fragment from the docker file and execute within the container.
+
+# Pester tests
+
+Assuming the image for **asarafian/mininugetserver:latest** is built the [Test-All.ps1](Source\Pester\Test-All.ps1) will execute and test the following sequence:
+
+1. Prepare a temporary packages folder to mount as volume for the target **packagesFolder** when running the **asarafian/mininugetserver** container.
+1. Prepare a random string to use as the target **apiKey** when running the **asarafian/mininugetserver** container.
+1. Test that container can run. User `docker run`  and acquire the IP. Acquire also the IP address.
+1. Register the NuGet repository. Use `Register-PSRepository`.
+1. Test the availability of the nuget server. Use `Find-Module`.
+1. Test that a publish operation is possible (implicit test that the **apiKey** was correctly configured). Use `Save-Module` and `Publish-Module`.
+1. Empty the mounted **packagesFolder**. This will remove all packages from the NuGet server.
+1. Test the availability of the nuget server. Use `Find-Module`.
+1. Test that the **packagesFolder** was correctly configured. Use `Find-Module`.
+1. Cleanup.
 
 # If you want to help...
 
