@@ -70,6 +70,9 @@ $url="http://$($ip)/"
 if(Test-NetConnection -CommonTCPPort HTTP -ComputerName $ip -InformationLevel Quiet)
 {
     Write-Host "$url is ready"
+    $location="http://$ip/nuget/"
+    Write-Host "Register-PSRepository -Name $instancename -SourceLocation $location -PublishLocation $location -InstallationPolicy Trusted"
+
 }
 else
 {
