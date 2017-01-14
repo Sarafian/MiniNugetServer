@@ -43,6 +43,34 @@ If you want to run manually then standard `docker run` can be used with option d
 - Specify **apikey** and/or **packagesFolder**: `docker run -d -p 8080:80 -e apikey=mininugetserver -e packagesPath=~/Packages --name mininugetserver asarafian/mininugetserver`
 - Use `C:\Shared\Packages` on the host as the **packagesFolder** (`C:\Packages` within the container) by mounting volumes: `docker run -d -p 8080:80 -v C:/Shared/Packages/:C:/Packages -e apikey=mininugetserver -e packagesPath=C:/Packages --name mininugetserver asarafian/mininugetserver`
 
+## Scale the container
+
+To scale the containers you can use define docker compose configuration file referencing the [asarafian/mininugetserver](https://hub.docker.com/r/asarafian/mininugetserver/). 
+To make sure they all behave the same and reference the same packages folder, define the **apikey** and/or **packagesFolder** environment variables.
+The **packagesFolder** folder must specify to a common folder on the host that needs to be mounted to each container.
+
+This is an example docker-compose file
+
+```text
+version: '2.1'
+
+services:
+  mininugetserver:
+    image: asarafian/mininugetserver
+    environment:
+      apikey: "mininugetserver"
+      packagesPath: "C:\Packages"
+    volumes:
+      - C:\MiniNuGetServer\Packages/:C:\Packages
+
+networks:
+  default:
+    external:
+      name: nat
+```
+
+To launch scale with e.g. 2 `mininugetserver` instances execute `docker-compose scale mininugetserver=2`.
+
 # Debug 
 
 To help tests within a container execute `.\Scripts\Debug-Container.ps1 -WindowsServer -Start cmd -ErrorAction Stop`. 
